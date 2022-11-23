@@ -58,8 +58,29 @@
      box-shadow: 2 2px #CDCDCD;
      transform: translateY(2px);
    }
+
+   .martitis-btn{
+    padding: 15px 50px;
+    font-size: 24px;
+    text-align: center;
+    outline: none;
+    color: #fff;
+    background-color: #04831f;
+    border: none;
+    border-radius: 5px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+   }
+   .martitis-detected{
+    background-color: #cf2008;
+   }
    .state {
-     font-size: 1.5rem;
+     font-size: 1.6rem;
      color:#8c8c8c;
      font-weight: bold;
    }
@@ -74,9 +95,12 @@
   </div>
   <div class="content">
     <div class="card">
-      <h2>Output - GPIO 2</h2>
-      <p class="state">state: <span id="state">%STATE%</span></p>
-      <p><button id="button" class="button">Toggle</button></p>
+      <h2>Locked Tempreture:</h2>
+      <p class="state"><span id="tempreture">0<sup><small>o</small></sup>C</span></p>
+      <h2>Current Tempreture:</h2>
+      <p class="state current-temp"><span id="current-tempreture">0<sup><small>o</small></sup>C</span></p>
+      <p><button id="button" class="button">Detect Mastitis</button></p>
+      <p><button id="mastits-detection" class="martitis-btn">NO MASTITIS</button></p>
     </div>
   </div>
 <script>
@@ -98,14 +122,23 @@
     setTimeout(initWebSocket, 2000);
   }
   function onMessage(event) {
-    var state;
-    if (event.data == "1"){
-      state = "ON";
+    var state = event.data.split(":");
+    var cmd = state[0];
+    var value = state[1];
+    if (cmd == "DT"){
+      document.getElementById('tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
+    }else if(cmd == "CT"){
+      document.getElementById('current-tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
+    }else{
+      /// other requests
+      if(value == "MD"){
+        document.querySelector("#mastits-detection").classList.add("martitis-detected");
+        document.querySelector("#mastits-detection").innerHTML="MASTITIS DETECTED";
+      }else{
+        document.querySelector("#mastits-detection").classList.remove("martitis-detected");
+        document.querySelector("#mastits-detection").innerHTML="NO MASTITIS";
+      }
     }
-    else{
-      state = "OFF";
-    }
-    document.getElementById('state').innerHTML = state;
   }
   function onLoad(event) {
     initWebSocket();

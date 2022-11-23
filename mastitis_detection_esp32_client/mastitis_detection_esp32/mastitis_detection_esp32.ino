@@ -2,13 +2,24 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <Adafruit_MLX90614.h>
 
-// Replace with your network credentials
+const int buzzer = 18; //buzzer
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+const int buttonPin = 15; // push button
+int buttonState = 0;   // button state
+double temp = 0; // body tempreture
+const double bodyTempThreshold = 29.5;
+const double mastitisBeepDuration = 1000; // 1 second
+const double tempDetectionBeepDuration = 100; // 100 milliseconds
+const double getTempDelay = 500;
+// setup AP Wifi station credentials
 const char* ssid = "KZFarm";
 const char* password = "12345678";
-
-bool ledState = 0;
-const int ledPin = 26;
+// led state
+bool mastitisState = 0;
+// ledpin
+const int ledPin = 26; // Beep threshold
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -17,7 +28,7 @@ AsyncWebSocket ws("/ws");
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <head>
-  <title>ESP Web Server</title>
+  <title>Dashboard - AI Based Mastits Detecting System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <style>
@@ -75,32 +86,54 @@ const char index_html[] PROGMEM = R"rawliteral(
      box-shadow: 2 2px #CDCDCD;
      transform: translateY(2px);
    }
+
+   .martitis-btn{
+    padding: 15px 50px;
+    font-size: 24px;
+    text-align: center;
+    outline: none;
+    color: #fff;
+    background-color: #04831f;
+    border: none;
+    border-radius: 5px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+   }
+   .martitis-detected{
+    background-color: #cf2008;
+   }
    .state {
-     font-size: 1.5rem;
+     font-size: 1.6rem;
      color:#8c8c8c;
      font-weight: bold;
    }
   </style>
-<title>ESP Web Server</title>
+<title>AI Based Mastits Detecting System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
 </head>
 <body>
   <div class="topnav">
-    <h1>ESP WebSocket Server</h1>
+    <h1>AI Based Mastits Detecting System</h1>
   </div>
   <div class="content">
     <div class="card">
-      <h2>Output - GPIO 2</h2>
-      <p class="state">state: <span id="state">%STATE%</span></p>
-      <p><button id="button" class="button">Toggle</button></p>
+      <h2>Detected Tempreture:</h2>
+      <p class="state"><span id="tempreture">0<sup><small>o</small></sup>C</span></p>
+      <h2>Current Tempreture:</h2>
+      <p class="state current-temp"><span id="current-tempreture">0<sup><small>o</small></sup>C</span></p>
+      <p><button id="mastits-detection" class="martitis-btn">NO MASTITIS</button></p>
     </div>
   </div>
 <script>
-  var gateway = `ws://${window.location.hostname}/ws`;
+  var gateway = `ws://192.168.4.1/ws`;
   var websocket;
   window.addEventListener('load', onLoad);
-  
   function initWebSocket() {
     console.log('Trying to open a WebSocket connection...');
     websocket = new WebSocket(gateway);
@@ -108,38 +141,34 @@ const char index_html[] PROGMEM = R"rawliteral(
     websocket.onclose   = onClose;
     websocket.onmessage = onMessage; // <-- add this line
   }
-  
   function onOpen(event) {
     console.log('Connection opened');
   }
-  
   function onClose(event) {
     console.log('Connection closed');
     setTimeout(initWebSocket, 2000);
   }
-  
   function onMessage(event) {
-    var state;
-    if (event.data == "1"){
-      state = "ON";
+    var state = event.data.split(":");
+    var cmd = state[0];
+    var value = state[1];
+    if (cmd == "DT"){
+      document.getElementById('tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
+    }else if(cmd == "CT"){
+      document.getElementById('current-tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
+    }else{
+      /// other requests
+      if(value == "MD"){
+        document.querySelector("#mastits-detection").classList.add("martitis-detected");
+        document.querySelector("#mastits-detection").innerHTML="MASTITIS DETECTED";
+      }else{
+        document.querySelector("#mastits-detection").classList.remove("martitis-detected");
+        document.querySelector("#mastits-detection").innerHTML="NO MASTITIS";
+      }
     }
-    else{
-      state = "OFF";
-    }
-    document.getElementById('state').innerHTML = state;
   }
-  
   function onLoad(event) {
     initWebSocket();
-    initButton();
-  }
-  
-  function initButton() {
-    document.getElementById('button').addEventListener('click', toggle);
-  }
-  
-  function toggle(){
-    websocket.send('toggle');
   }
 </script>
 </body>
@@ -147,7 +176,9 @@ const char index_html[] PROGMEM = R"rawliteral(
 )rawliteral";
 
 void notifyClients() {
-  ws.textAll(String(ledState));
+  // notify other clients that mastitcs is detected
+  String mtemp = "MT:MD";
+  ws.textAll(String(mtemp));
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
@@ -155,7 +186,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     if (strcmp((char*)data, "toggle") == 0) {
-      ledState = !ledState;
+      mastitisState = 1;
       notifyClients();
     }
   }
@@ -187,7 +218,7 @@ void initWebSocket() {
 String processor(const String& var){
   Serial.println(var);
   if(var == "STATE"){
-    if (ledState){
+    if (mastitisState){
       return "ON";
     }
     else{
@@ -200,21 +231,16 @@ String processor(const String& var){
 void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
-    ///////
+    /////// setup led
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, LOW);
-  
-  // Connect to Wi-Fi
-  // WiFi.begin(ssid, password);
-  // while (WiFi.status() != WL_CONNECTED) {
-  //   delay(1000);
-  //   Serial.println("Connecting to WiFi..");
-  // }
-
-  // // Print ESP Local IP Address
-  // Serial.println(WiFi.localIP());
-
-    // Connect to Wi-Fi network with SSID and password
+  /////////////  setup buzzer
+  pinMode(buzzer, OUTPUT); // Set buzzer - pin 9 as an output
+  //////// setup button
+  pinMode(buttonPin, INPUT);
+  ////// setup buzzer
+  digitalWrite(buzzer, LOW);
+  ////////
   Serial.print("Setting AP (Access Point)…");
   // Remove the password parameter, if you want the AP (Access Point) to be open
   WiFi.softAP(ssid, password);
@@ -223,21 +249,69 @@ void setup(){
   ////////
   Serial.print("AP IP address: ");
   Serial.println(IP);
-
   initWebSocket();
-
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html, processor);
   });
-
-  // Start server
+  // start server
+   // Start server
+  Serial.print("Sarting server.....");
   server.begin();
+  Serial.print("Sarting mxl sensor…");  
+  while (!Serial);
+  if (!mlx.begin()) {
+    Serial.println("Error connecting to MLX sensor.");
+    while (1);
+  };
 }
-
+///loop
 void loop() {
-  ws.cleanupClients();
-  digitalWrite(ledPin, ledState);
+    ws.cleanupClients();
+  // read object tempreture
+  temp = mlx.readObjectTempC();
+  // read button state
+  buttonState = digitalRead(buttonPin);
+  // if button is high proceed and check current tempreture from sensor
+  if(buttonState == HIGH){
+  Serial.println("TEMP: ");
+  Serial.println(temp);
+  // notify all the clients about the current tempreture
+  // detected tempreture
+  String stemp = "DT:" + String(temp);
+  ws.textAll(stemp);
+  //////////////////////
+  if(temp > bodyTempThreshold){
+    digitalWrite(buzzer, HIGH);
+    delay(tempDetectionBeepDuration);
+    digitalWrite(buzzer, LOW);
+  }else{
+  digitalWrite(buzzer, LOW);
+  }    
+  }else{
+    // current tempreture
+    String ctemp = "CT:" + String(temp);
+    ws.textAll(ctemp);   
+  }
+  // if mastitis has been detected in a cow 
+  // TO DO: Make a long beep
+  if(mastitisState){ 
+    // open states
+  digitalWrite(buzzer, LOW);
+    // turn on the LED
+    digitalWrite(ledPin, mastitisState);
+    // turn on the buzzer
+    digitalWrite(buzzer, mastitisState);
+    delay(mastitisBeepDuration);
+    // reset all states after beep delay is timed out
+    mastitisState = LOW;
+    digitalWrite(buzzer, LOW);
+    digitalWrite(ledPin, LOW);
+    // resent mastits state on all clients
+     String mtemp = "MT:MN";
+     ws.textAll(String(mtemp));
+  }
+  delay(getTempDelay);
 }
 
 
