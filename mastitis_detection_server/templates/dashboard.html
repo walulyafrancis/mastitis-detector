@@ -100,7 +100,7 @@
       <h2>Current Tempreture:</h2>
       <p class="state current-temp"><span id="current-tempreture">0<sup><small>o</small></sup>C</span></p>
       <p><button id="button" class="button">Detect Mastitis</button></p>
-      <p><button id="mastits-detection" class="martitis-btn">NO MASTITIS</button></p>
+      <p><button id="mastits-detection" class="martitis-btn">NO MASTITIS DETECTED</button></p>
     </div>
   </div>
 <script>
@@ -136,7 +136,7 @@
         document.querySelector("#mastits-detection").innerHTML="MASTITIS DETECTED";
       }else{
         document.querySelector("#mastits-detection").classList.remove("martitis-detected");
-        document.querySelector("#mastits-detection").innerHTML="NO MASTITIS";
+        document.querySelector("#mastits-detection").innerHTML="NO MASTITIS DETECTED";
       }
     }
   }
