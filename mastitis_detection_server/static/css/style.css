@@ -1,0 +1,81 @@
+#layoutAuthentication #layoutAuthentication_footer {
+    min-width: 0;
+  }
+
+  html {
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  h3 {
+    font-size: 1.2rem;
+    color: white;
+  }
+  h2{
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #143642;
+  }
+  .topnav {
+    overflow: hidden;
+    background-color: #143642;
+  }
+  body {
+    margin: 0;
+  }
+  .content {
+    padding: 20px;
+    max-width: 600px;
+  }
+  /* .card {
+    background-color: #F8F7F9;;
+    box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+    padding-top:10px;
+    padding-bottom:20px;
+  } */
+  .button {
+    padding: 10px 40px;
+    font-size: 20px;
+    outline: none;
+    color: #fff;
+    background-color: #0f8b8d;
+    border: none;
+    border-radius: 5px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+   }
+   /*.button:hover {background-color: #0f8b8d}*/
+   .button:active {
+     background-color: #0f8b8d;
+     box-shadow: 2 2px #CDCDCD;
+     transform: translateY(2px);
+   }
+
+   .martitis-btn{
+    padding: 15px 20px;
+    font-size: 15px;
+    text-align: center;
+    outline: none;
+    color: #fff;
+    background-color: #04831f;
+    border: none;
+    border-radius: 5px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+   }
+   .martitis-detected{
+    background-color: #cf2008;
+   }
+   .state {
+     font-size: 1.2rem;
+     color:#8c8c8c;
+     font-weight: bold;
+   }

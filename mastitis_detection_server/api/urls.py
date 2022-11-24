@@ -8,8 +8,15 @@ from . import APIView
 
 urlpatterns = [
     path('', APIView.index.as_view(), name="invalid-entry"),
+    ################################
+    path('detect/mastitis/tempreture/<int:animalid>/', APIView.DetectMastitisTemp.as_view(), name="detect-tempreture"),
+    path('detect/mastitis/milk/<int:animalid>/', APIView.DetectMastitisMilk.as_view(), name="detect-milk"),
+    ####################################3
+    path('animals/all/', APIView.getAllAnimals.as_view(), name="get-all-animals"),
+    ##################3333
+    path('tempreture/save/', APIView.index.as_view(), name="save-tempreture"),
+    path('milk/save/', APIView.index.as_view(), name="save-milk"),
     #g
-    #path("<str:lang>/accounting/finacialyears/<int:yearid>/", accounting_view.getFinancialYearById.as_view(), name="get-accounting-finacialyears-units-by-id"),
 ]
 
 urlpatterns = urlpatterns + \

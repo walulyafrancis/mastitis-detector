@@ -4,7 +4,10 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import login as authlogin
 from django.contrib.auth import logout as authlogout
 from django.conf import settings
+from api.API import API
 # Create your views here.
+
+_api = API()
 
 # Create your views here.
 def index(request):
@@ -50,6 +53,10 @@ def logout(request):
     return redirect('home')
 
 def dashboard(request):
-#   if not request.user.is_authenticated:
-#     return redirect('/?error=Invalid entry, please login first')
-  return render(request, "dashboard.html")
+  if not request.user.is_authenticated:
+    return redirect('/?error=Invalid entry, please login first')
+  ####################
+  animals = _api.getAllAnimals(request)
+  return render(request, "dashboard.html", {
+    "animals": animals
+  })

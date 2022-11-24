@@ -1,111 +1,216 @@
+{% load static %}
 <!DOCTYPE HTML><html>
 <head>
   <title>Dashboard - AI Based Mastits Detecting System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
-  <style>
-  html {
-    font-family: Arial, Helvetica, sans-serif;
-    text-align: center;
-  }
-  h1 {
-    font-size: 1.8rem;
-    color: white;
-  }
-  h2{
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #143642;
-  }
-  .topnav {
-    overflow: hidden;
-    background-color: #143642;
-  }
-  body {
-    margin: 0;
-  }
-  .content {
-    padding: 30px;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  .card {
-    background-color: #F8F7F9;;
-    box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
-    padding-top:10px;
-    padding-bottom:20px;
-  }
-  .button {
-    padding: 15px 50px;
-    font-size: 24px;
-    text-align: center;
-    outline: none;
-    color: #fff;
-    background-color: #0f8b8d;
-    border: none;
-    border-radius: 5px;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-   }
-   /*.button:hover {background-color: #0f8b8d}*/
-   .button:active {
-     background-color: #0f8b8d;
-     box-shadow: 2 2px #CDCDCD;
-     transform: translateY(2px);
-   }
-
-   .martitis-btn{
-    padding: 15px 50px;
-    font-size: 24px;
-    text-align: center;
-    outline: none;
-    color: #fff;
-    background-color: #04831f;
-    border: none;
-    border-radius: 5px;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-   }
-   .martitis-detected{
-    background-color: #cf2008;
-   }
-   .state {
-     font-size: 1.6rem;
-     color:#8c8c8c;
-     font-weight: bold;
-   }
-  </style>
 <title>AI Based Mastits Detecting System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet"/>
+<link href="{% static 'css/font-awesome.min.css' %}" rel="stylesheet"/>
+<link href="{% static 'css/style.css' %}" rel="stylesheet"/>
 </head>
-<body>
-  <div class="topnav">
-    <h1>AI Based Mastits Detecting System</h1>
+<body class="bg-secondary">
+  <div class="topnav d-flex pt-2 pb-2 px-4 justify-content-between shadow-">
+    <h4 style="color: #ffffff;">AI Based Mastits Detecting System</h4>
+
+  <div>
+ {% if user.is_authenticated %}
+ <span style="color: #ffffff;"></a> Logged in as: {{user.username}}! </span>
+    {% endif %}  
+    <i class="fas fa-user fa-fw"></i>
+    <a style="color: #ffffff;" class="btn btn-success" href="{% url 'logout' %}">
+      <i class="fa fa-right-to-bracket"></i>
+        Logout
+      </a>
+      </div>
   </div>
-  <div class="content">
-    <div class="card">
-      <h2>Locked Tempreture:</h2>
-      <p class="state"><span id="tempreture">0<sup><small>o</small></sup>C</span></p>
-      <h2>Current Tempreture:</h2>
-      <p class="state current-temp"><span id="current-tempreture">0<sup><small>o</small></sup>C</span></p>
-      <p><button id="button" class="button">Detect Mastitis</button></p>
-      <p><button id="mastits-detection" class="martitis-btn">NO MASTITIS DETECTED</button></p>
+<div class="container-fluid">
+  <div class="row mt-2">
+    <!--col-md-6-->
+  <div class="col-md-6">
+    <div class="card mb-2">
+      <div class="card-header">
+        <h5>Tempreture Test</h5>
+      </div>
+      <div class="card-body">
+        <form>
+          <!----->
+          <div class="mb-2">
+            <label for="staticEmail" class="col-form-label"><b>Please select animal:</b></label>
+          <select id="tempreture-animal" class="form-control">
+          {% for animal in animals %}
+             <option value="{{ animal.id }}">{{ animal.animal_number }} - {{ animal.animal_name }} : Age: {{ animal.age }}</option>
+          {%endfor %}
+          </select>
+        </div>
+
+          <div class="mb-2">
+            <label for="staticEmail" class="col-form-label"><b>Right Front Udder quarter:</b></label>
+        <div class="input-group">
+          <input type="number" id="right-front-udder-quarter" onfocus="FieldTempreture(this)" class="form-control" >
+          <span class="input-group-text"><sup><small>o</small></sup>C</span></span>
+        </div>
+        </div>
+        <!---->
+
+           <!----->
+           <div class="mb-2">
+            <label for="staticEmail" class="col-form-label"><b>Left Front udder Quarter :</b></label>
+        <div class="input-group">
+          <input type="number" id="left-front-udder-quarter"  onfocus="FieldTempreture(this)" class="form-control" >
+          <span class="input-group-text"><sup><small>o</small></sup>C</span></span>
+        </div>
+        </div>
+        <!---->
+
+           <!----->
+           <div class="mb-2">
+          <label for="staticEmail" class="col-form-label"><b>Right Rear udder Quarter:</b></label>
+        <div class="input-group">
+          <input type="number" id="right-rear-udder-quarter" onfocus="FieldTempreture(this)" class="form-control" >
+          <span class="input-group-text"><sup><small>o</small></sup>C</span></span>
+        </div>
+        </div>
+        <!---->
+
+           <!----->
+           <div class="mb-2">
+            <label for="staticEmail" class="col-form-label"><b>Left Rear udder Quarter:</b></label>
+        <div class="input-group">
+          <input type="number" id="left-rear-udder-quarter" onfocus="FieldTempreture(this)" class="form-control" >
+          <span class="input-group-text"><sup><small>o</small></sup>C</span></span>
+        </div>
+        </div>
+        <!---->
+      </form>
+
+      <p><button id="button" class="button pull-right mt-1">Detect</button></p>
+      </div>
     </div>
   </div>
+
+  <!--col-md-6-->
+  <div class="col-md-6">
+    <div class="row">
+      
+    
+      <div class="col-md-6">
+    <div class="card mb-2">
+      <div class="card-header">
+        <h5>Tempreture</h5>
+      </div>
+      <div class="card-body">
+        <p class="state">Detected: <span id="tempreture">0<sup><small>o</small></sup>C</span></p>
+        <p class="state current-temp">Current: <span id="current-tempreture">0<sup><small>o</small></sup>C</span></p>
+      </div>
+    </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card mb-2">
+        <div class="card-header">
+          <h5>Status</h5>
+        </div>
+        <div class="card-body">
+          <p><button id="mastits-detection" class="martitis-btn">NO MASTITIS DETECTED</button></p>
+        </div>
+      </div>
+      </div>
+  </div>
+    <div class="card mb-2">
+      <div class="card-header">
+        <h5>Milk Test</h5>
+       </div>
+       <div class="card-body">
+       <form>
+        <!----->
+        <!----->
+        <div class="mb-2">
+          <label for="staticEmail" class="col-form-label"><b>Please select animal:</b></label>
+        <select id="milk-animal" class="form-control">
+        {% for animal in animals %}
+            <option value="{{ animal.id }}">{{ animal.animal_number }} - {{ animal.animal_name }} : Age: {{ animal.age }}</option>
+        {%endfor %}
+        </select>
+      </div>
+
+        <div class="mb-2">
+          <label for="staticEmail" class="col-form-label"><b>Conductivity.LF:</b></label>
+      <div class="input-group">
+        <input type="number" class="form-control" >
+        <span class="input-group-text"><small>m</small>S</span></span>
+      </div>
+      </div>
+      <!---->
+
+         <!----->
+         <div class="mb-2">
+          <label for="staticEmail" class="col-form-label"><b>Conductivity.LR:</b></label>
+      <div class="input-group">
+        <input type="number" class="form-control" >
+        <span class="input-group-text"><small>m</small>S</span></span>
+      </div>
+      </div>
+      <!---->
+
+         <!----->
+         <div class="mb-2">
+        <label for="staticEmail" class="col-form-label"><b>Conductivity.RF:</b></label>
+      <div class="input-group">
+        <input type="number" class="form-control" >
+        <span class="input-group-text"><small>m</small>S</span></span>
+      </div>
+      </div>
+      <!---->
+
+         <!----->
+         <div class="mb-2">
+          <label for="staticEmail" class="col-form-label"><b>Conductivity.RR:</b></label>
+      <div class="input-group">
+        <input type="number" class="form-control" >
+        <span class="input-group-text"><small>m</small>S</span></span>
+      </div>
+      </div>
+      <!---->
+    </form>
+        <p><button onclick="toggle()" class="button">Detect</button></p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<!--conatiner-->
+<p></p><br>
+<p></p>
+  <div id="layoutAuthentication_footer">
+    <footer class="py-4 bg-light mt-auto">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center justify-content-between small">
+                <div class="text-muted">Copyright &copy; AI Based Matits Detection System 2022</div>
+                <div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script src="{% static 'js/bootstrap.min.js' %}" crossorigin="anonymous"></script>
+<script src="{% static 'js/jquery-3.6.1.min.js' %}" crossorigin="anonymous"></script>
+<script src="{% static 'js/scripts.js' %}"></script>
 <script>
+
+var _currentfiled = document.querySelector("#right-front-udder-quarter");
+///////
+function FieldTempreture(event){
+  _currentfiled = event;
+}
+
+/////////////////////////////////
   var gateway = `ws://192.168.4.1/ws`;
   var websocket;
+  ////////
   window.addEventListener('load', onLoad);
   function initWebSocket() {
     console.log('Trying to open a WebSocket connection...');
@@ -126,7 +231,9 @@
     var cmd = state[0];
     var value = state[1];
     if (cmd == "DT"){
+      // console.log(_currentfiled);
       document.getElementById('tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
+      _currentfiled.value = value;
     }else if(cmd == "CT"){
       document.getElementById('current-tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
     }else{
@@ -140,13 +247,16 @@
       }
     }
   }
+  /////
   function onLoad(event) {
     initWebSocket();
     initButton();
   }
+  //////
   function initButton() {
     document.getElementById('button').addEventListener('click', toggle);
   }
+  ///////
   function toggle(){
     websocket.send('toggle');
   }
