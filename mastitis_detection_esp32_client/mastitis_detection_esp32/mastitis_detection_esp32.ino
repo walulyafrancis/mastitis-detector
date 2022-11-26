@@ -6,7 +6,7 @@
 
 const int buzzer = 18; //buzzer
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
-const int buttonPin = 15; // push button
+const int buttonPin = 13; // push button
 int buttonState = 0;   // button state
 double temp = 0; // body tempreture
 const double bodyTempThreshold = 29.5;
@@ -107,6 +107,14 @@ const char index_html[] PROGMEM = R"rawliteral(
    .martitis-detected{
     background-color: #cf2008;
    }
+
+   .no-martitis-detected{
+    background-color: #04831f;
+   }
+
+   .sub-martitis-detected{
+     background-color: #FFCA2C;
+   }
    .state {
      font-size: 1.6rem;
      color:#8c8c8c;
@@ -127,7 +135,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       <p class="state"><span id="tempreture">0<sup><small>o</small></sup>C</span></p>
       <h2>Current Tempreture:</h2>
       <p class="state current-temp"><span id="current-tempreture">0<sup><small>o</small></sup>C</span></p>
-      <p><button id="mastits-detection" class="martitis-btn">NO MASTITIS</button></p>
+      <p><button id="mastits-detection" class="martitis-btn no-martitis-detected">NO MASTITIS DETECTED</button></p>
     </div>
   </div>
 <script>
@@ -150,20 +158,32 @@ const char index_html[] PROGMEM = R"rawliteral(
   }
   function onMessage(event) {
     var state = event.data.split(":");
+    console.log(state);
     var cmd = state[0];
-    var value = state[1];
+    var value = state[1];    
     if (cmd == "DT"){
       document.getElementById('tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
     }else if(cmd == "CT"){
       document.getElementById('current-tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
     }else{
-      /// other requests
-      if(value == "MD"){
-        document.querySelector("#mastits-detection").classList.add("martitis-detected");
-        document.querySelector("#mastits-detection").innerHTML="MASTITIS DETECTED";
-      }else{
+    if (cmd == "CM"){
+       document.querySelector("#mastits-detection").classList.add("martitis-detected");
+        document.querySelector("#mastits-detection").innerHTML=value;
+        //////////////////////////
+        document.querySelector("#mastits-detection").classList.remove("sub-martitis-detected");
+        document.querySelector("#mastits-detection").classList.remove("no-martitis-detected");
+    }else if(cmd == "SCM"){
+      document.querySelector("#mastits-detection").classList.add("sub-martitis-detected");
+        document.querySelector("#mastits-detection").innerHTML=value;
+        /////////////////////////
         document.querySelector("#mastits-detection").classList.remove("martitis-detected");
-        document.querySelector("#mastits-detection").innerHTML="NO MASTITIS";
+        document.querySelector("#mastits-detection").classList.remove("no-martitis-detected");
+    }else{
+        document.querySelector("#mastits-detection").classList.add("no-martitis-detected");
+        document.querySelector("#mastits-detection").innerHTML=value;
+        ///////////////////////
+        document.querySelector("#mastits-detection").classList.remove("martitis-detected");
+        document.querySelector("#mastits-detection").classList.remove("sub-martitis-detected");
       }
     }
   }
@@ -175,9 +195,9 @@ const char index_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-void notifyClients() {
+void notifyClients(String &mtemp) {
   // notify other clients that mastitcs is detected
-  String mtemp = "MT:MD";
+  // String mtemp = "MT:MD";
   ws.textAll(String(mtemp));
 }
 
@@ -185,9 +205,19 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    if (strcmp((char*)data, "toggle") == 0) {
-      mastitisState = 1;
-      notifyClients();
+      String text = (char*)data;
+      Serial.println(text);
+    if(text != ""){
+    ////////myString.indexOf("Arduino");
+    if(text.indexOf("CM:") > 0){
+     // contains mastitis
+        mastitisState = 1;
+    }else if(text.indexOf("SCM:") > 0){
+        mastitisState = 1;
+    }else{
+      mastitisState = 0;      
+    }
+    notifyClients(text);
     }
   }
 }
@@ -267,7 +297,7 @@ void setup(){
 }
 ///loop
 void loop() {
-    ws.cleanupClients();
+  ws.cleanupClients();
   // read object tempreture
   temp = mlx.readObjectTempC();
   // read button state
@@ -308,8 +338,8 @@ void loop() {
     digitalWrite(buzzer, LOW);
     digitalWrite(ledPin, LOW);
     // resent mastits state on all clients
-     String mtemp = "MT:MN";
-     ws.textAll(String(mtemp));
+    //  String mtemp = "MT:MN";
+    //  ws.textAll(String(mtemp));
   }
   delay(getTempDelay);
 }

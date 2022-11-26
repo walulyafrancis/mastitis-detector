@@ -245,6 +245,7 @@ function FieldTempreture(event){
     var state = event.data.split(":");
     var cmd = state[0];
     var value = state[1];
+    console.log(state);
     if (cmd == "DT"){
       // console.log(_currentfiled);
       document.getElementById('tempreture').innerHTML = value + "<sup><small>o</small></sup>C";
@@ -330,6 +331,7 @@ $.ajax(settings).done(function (response) {
   $("#btn-detect-tempreture-test").removeAttr("disabled");
   //  console.log(response);
   var prediction = response.prediction;
+  //////////////////
   if(prediction == 2){
      $("#mastits-detection-status").addClass("btn-danger");
       /////
@@ -398,9 +400,16 @@ $.ajax(settings).done(function (response) {
 }),
 };
 $.ajax(settings).done(function (response) {
+  //////////
   $("#btn-save-tempreture-test").html("Save");
   $("#btn-save-tempreture-test").removeAttr("disabled");
-  //  console.log(response);
+  //// console.log(response);
+  ///////////////////////////////////////
+  $("#right-front-udder-quarter").val("");
+  $("#left-front-udder-quarter").val("");
+  $("#right-rear-udder-quarter").val("");
+  $("#left-rear-udder-quarter").val("");
+  ///////////////////////////////////////
   $("#tempreture-test-results").html("<span class='text-success'>Test and Predicted results saved succefully</span>");
 });
 }else{
