@@ -35,8 +35,9 @@
         <h5>Tempreture Test</h5>
       </div>
       <div class="card-body">
-        <form>
+        <form id="tempreture-test-form">
           <!----->
+          {% csrf_token %}
           <div class="mb-2">
             <label for="staticEmail" class="col-form-label"><b>Please select animal:</b></label>
           <select id="tempreture-animal" class="form-control">
@@ -86,7 +87,14 @@
         <!---->
       </form>
 
-      <p><button id="button" class="button pull-right mt-1">Detect</button></p>
+      <div id="tempreture-test-results" class="mb-2">
+
+      </div>
+
+      <p class="pull-right mt-1">
+        <button id="btn-save-tempreture-test" onclick="SaveTempretureTestResults()" class="btn btn-primary">Save</button>
+         <button id="btn-detect-tempreture-test" onclick="TempretureTest()" class="btn btn-info pl-2">Detect</button>
+        </p>
       </div>
     </div>
   </div>
@@ -114,7 +122,7 @@
           <h5>Status</h5>
         </div>
         <div class="card-body">
-          <p><button id="mastits-detection" class="martitis-btn">NO MASTITIS DETECTED</button></p>
+          <p><button id="mastits-detection-status" class="btn btn-success btn-lg">NO MASTITIS DETECTED</button></p>
         </div>
       </div>
       </div>
@@ -124,8 +132,9 @@
         <h5>Milk Test</h5>
        </div>
        <div class="card-body">
-       <form>
+       <form >
         <!----->
+      
         <!----->
         <div class="mb-2">
           <label for="staticEmail" class="col-form-label"><b>Please select animal:</b></label>
@@ -207,9 +216,12 @@ function FieldTempreture(event){
   _currentfiled = event;
 }
 
+
+
 /////////////////////////////////
   var gateway = `ws://192.168.4.1/ws`;
   var websocket;
+  var isConnected = false;
   ////////
   window.addEventListener('load', onLoad);
   function initWebSocket() {
@@ -221,10 +233,13 @@ function FieldTempreture(event){
   }
   function onOpen(event) {
     console.log('Connection opened');
+    isConnected = true;
   }
   function onClose(event) {
     console.log('Connection closed');
+    isConnected = false;
     setTimeout(initWebSocket, 2000);
+    
   }
   function onMessage(event) {
     var state = event.data.split(":");
@@ -250,15 +265,147 @@ function FieldTempreture(event){
   /////
   function onLoad(event) {
     initWebSocket();
-    initButton();
+    // initButton();
   }
   //////
-  function initButton() {
-    document.getElementById('button').addEventListener('click', toggle);
-  }
+  // function initButton() {
+  //   document.getElementById('button').addEventListener('click', toggle);
+  // }
   ///////
   function toggle(){
-    websocket.send('toggle');
+    websocket.send('N:POSSIBLE CLINICAL MASTITIS');
+  }
+
+
+  // $("tempreture-test-form").submit(function (e) {
+
+  //   // / preventing default actions
+  //     e.preventDefault();
+  //     // serialize the data for sending the form data.
+  //     var serializedData = $(this).serialize();
+  //     serializedData["save"] = false;
+  //     console.log(serializedData);
+
+  // });
+
+  function getStatus(prediction){
+   if(prediction == 2){
+    return "danger";
+   }else if(prediction == 1){
+    return "warning";
+   }else{
+    return "success";
+   }
+  }
+
+  function TempretureTest(){
+    var tempreture_animal = parseInt($("#tempreture-animal").val());
+    var right_front_udder_quarter = parseFloat($("#right-front-udder-quarter").val());
+    var left_front_udder_quarter = parseFloat($("#left-front-udder-quarter").val());
+    var right_rear_udder_quarter = parseFloat($("#right-rear-udder-quarter").val());
+    var left_rear_udder_quarter = parseFloat(parseInt($("#left-rear-udder-quarter").val()));
+    const csrftoken = document.querySelector('#tempreture-test-form [name=csrfmiddlewaretoken]').value;
+  // console.log(csrftoken);
+  if(tempreture_animal && right_front_udder_quarter && right_rear_udder_quarter && left_rear_udder_quarter){
+  $("#btn-detect-tempreture-test").html("Proccessing..");
+    $("#btn-detect-tempreture-test").attr("disabled", "true")
+    var settings = {
+  "url": "http://127.0.0.1:8000/api/detect/mastitis/tempreture/" + tempreture_animal + "/",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    'X-CSRFToken': csrftoken
+  },
+  'mode': 'same-origin',
+  "data": JSON.stringify({
+    "save":false,
+  "right-front-udder-quarter": right_front_udder_quarter,
+  "left-front-udder-quarter": left_front_udder_quarter,
+  "right-rear-udder-quarter": right_rear_udder_quarter,
+  "left-rear-udder-quarter": left_rear_udder_quarter,
+}),
+};
+$.ajax(settings).done(function (response) {
+  $("#btn-detect-tempreture-test").html("Detect");
+  $("#btn-detect-tempreture-test").removeAttr("disabled");
+  //  console.log(response);
+  var prediction = response.prediction;
+  if(prediction == 2){
+     $("#mastits-detection-status").addClass("btn-danger");
+      /////
+     $("#mastits-detection-status").removeClass("btn-warning");
+     $("#mastits-detection-status").removeClass("btn-success");
+     $("#mastits-detection-status").html("POSSIBLE CLINICAL MASTITIS");
+     if(isConnected){
+     websocket.send('CM:POSSIBLE CLINICAL MASTITIS');
+     }
+  }else if (prediction == 1){
+    $("#mastits-detection-status").addClass("btn-warning");
+    ///
+    $("#mastits-detection-status").removeClass("btn-danger");
+    $("#mastits-detection-status").removeClass("btn-success");
+    $("#mastits-detection-status").html("POSSIBLE SUB-CLINICAL MASTITIS");
+    if(isConnected){
+    websocket.send('SCM:POSSIBLE SUB-CLINICAL MASTITIS');
+    }
+  }else{
+    $("#mastits-detection-status").addClass("btn-success");
+    $("#mastits-detection-status").removeClass("btn-warning");
+    $("#mastits-detection-status").removeClass("btn-danger");
+    $("#mastits-detection-status").html("NO MASTITIS DETECTED");
+    if(isConnected){
+    websocket.send('NM:NO MASTITIS DETECTED');
+    }
+  }
+  var dataString = "<div>Right Front Udder quarter: " + response.right_front_udder_quarter.temp + "<small><sup>o</sup></small>C - <span class='text-" + getStatus(response.right_front_udder_quarter.prediction) + "'>" + response.right_front_udder_quarter.results + "</span></div>"
+                  + "<div>Left Front udder Quarter: " + response.left_front_udder_quarter.temp + "<small><sup>o</sup></small>C - <span class='text-" + getStatus(response.left_front_udder_quarter.prediction) + "'>"  + response.left_front_udder_quarter.results + "</span></div>"
+                  + "<div>Right Rear udder Quarter: " + response.right_rear_udder_quarter.temp + "<small><sup>o</sup></small>C - <span class='text-" + getStatus(response.right_rear_udder_quarter.prediction) + "'>"  + response.right_rear_udder_quarter.results + "</span></div>"
+                  + "<div>Left Rear udder Quarter: " + response.left_rear_udder_quarter.temp + "<small><sup>o</sup></small>C - <span class='text-" + getStatus(response.left_rear_udder_quarter.prediction) + "'>"  + response.left_rear_udder_quarter.results + "</span></div>"
+                  + "<div>Possible: </div>";
+  $("#tempreture-test-results").html(dataString);
+});
+}else{
+    alert("All fields are required")
+  }
+  }
+
+
+  function SaveTempretureTestResults(){
+    var tempreture_animal = parseInt($("#tempreture-animal").val());
+    var right_front_udder_quarter = parseFloat($("#right-front-udder-quarter").val());
+    var left_front_udder_quarter = parseFloat($("#left-front-udder-quarter").val());
+    var right_rear_udder_quarter = parseFloat($("#right-rear-udder-quarter").val());
+    var left_rear_udder_quarter = parseFloat(parseInt($("#left-rear-udder-quarter").val()));
+    const csrftoken = document.querySelector('#tempreture-test-form [name=csrfmiddlewaretoken]').value;
+  // console.log(csrftoken);
+  if(tempreture_animal && right_front_udder_quarter && right_rear_udder_quarter && left_rear_udder_quarter){
+  $("#btn-save-tempreture-test").html("saving data..");
+    $("#btn-save-tempreture-test").attr("disabled", "true")
+    var settings = {
+  "url": "http://127.0.0.1:8000/api/detect/mastitis/tempreture/" + tempreture_animal + "/",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    'X-CSRFToken': csrftoken
+  },
+  'mode': 'same-origin',
+  "data": JSON.stringify({
+    "save": true,
+  "right-front-udder-quarter": right_front_udder_quarter,
+  "left-front-udder-quarter": left_front_udder_quarter,
+  "right-rear-udder-quarter": right_rear_udder_quarter,
+  "left-rear-udder-quarter": left_rear_udder_quarter,
+}),
+};
+$.ajax(settings).done(function (response) {
+  $("#btn-save-tempreture-test").html("Save");
+  $("#btn-save-tempreture-test").removeAttr("disabled");
+  //  console.log(response);
+  $("#tempreture-test-results").html("<span class='text-success'>Test and Predicted results saved succefully</span>");
+});
+}else{
+    alert("All fields are required")
+  }
   }
 </script>
 </body>
