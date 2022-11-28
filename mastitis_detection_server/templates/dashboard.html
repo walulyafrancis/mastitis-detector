@@ -85,12 +85,10 @@
         </div>
         </div>
         <!---->
+    
       </form>
-
       <div id="tempreture-test-results" class="mb-2">
-
       </div>
-
       <p class="pull-right mt-1">
         <button id="btn-save-tempreture-test" onclick="SaveTempretureTestResults()" class="btn btn-primary">Save</button>
          <button id="btn-detect-tempreture-test" onclick="TempretureTest()" class="btn btn-info pl-2">Detect</button>
@@ -132,9 +130,9 @@
         <h5>Milk Test</h5>
        </div>
        <div class="card-body">
-       <form >
+       <form id="milk-test-form">
         <!----->
-      
+        {% csrf_token %}
         <!----->
         <div class="mb-2">
           <label for="staticEmail" class="col-form-label"><b>Please select animal:</b></label>
@@ -148,7 +146,7 @@
         <div class="mb-2">
           <label for="staticEmail" class="col-form-label"><b>Conductivity.LF:</b></label>
       <div class="input-group">
-        <input type="number" class="form-control" >
+        <input type="number" id="conductivity_lf" class="form-control" >
         <span class="input-group-text"><small>m</small>S</span></span>
       </div>
       </div>
@@ -158,7 +156,7 @@
          <div class="mb-2">
           <label for="staticEmail" class="col-form-label"><b>Conductivity.LR:</b></label>
       <div class="input-group">
-        <input type="number" class="form-control" >
+        <input type="number" id="conductivity_lr" class="form-control" >
         <span class="input-group-text"><small>m</small>S</span></span>
       </div>
       </div>
@@ -168,7 +166,7 @@
          <div class="mb-2">
         <label for="staticEmail" class="col-form-label"><b>Conductivity.RF:</b></label>
       <div class="input-group">
-        <input type="number" class="form-control" >
+        <input type="number" id="conductivity_rf" class="form-control" >
         <span class="input-group-text"><small>m</small>S</span></span>
       </div>
       </div>
@@ -178,13 +176,19 @@
          <div class="mb-2">
           <label for="staticEmail" class="col-form-label"><b>Conductivity.RR:</b></label>
       <div class="input-group">
-        <input type="number" class="form-control" >
+        <input type="number" id="conductivity_rr" class="form-control" >
         <span class="input-group-text"><small>m</small>S</span></span>
       </div>
       </div>
       <!---->
+    
     </form>
-        <p><button onclick="toggle()" class="button">Detect</button></p>
+    <div id="milk-test-results" class="mb-2">
+    </div>
+    <p class="pull-right mt-1">
+      <button id="btn-save-milk-test" onclick="SaveMilkTestResults()" class="btn btn-primary">Save</button>
+       <button id="btn-detect-milk-test" onclick="MilkTest()" class="btn btn-info pl-2">Detect</button>
+      </p>
       </div>
     </div>
   </div>
@@ -307,7 +311,7 @@ function FieldTempreture(event){
     var left_rear_udder_quarter = parseFloat(parseInt($("#left-rear-udder-quarter").val()));
     const csrftoken = document.querySelector('#tempreture-test-form [name=csrfmiddlewaretoken]').value;
   // console.log(csrftoken);
-  if(tempreture_animal && right_front_udder_quarter && right_rear_udder_quarter && left_rear_udder_quarter){
+  if(tempreture_animal && right_front_udder_quarter && left_front_udder_quarter && right_rear_udder_quarter && left_rear_udder_quarter){
   $("#btn-detect-tempreture-test").html("Proccessing..");
     $("#btn-detect-tempreture-test").attr("disabled", "true")
     var settings = {
@@ -380,7 +384,7 @@ $.ajax(settings).done(function (response) {
     var left_rear_udder_quarter = parseFloat(parseInt($("#left-rear-udder-quarter").val()));
     const csrftoken = document.querySelector('#tempreture-test-form [name=csrfmiddlewaretoken]').value;
   // console.log(csrftoken);
-  if(tempreture_animal && right_front_udder_quarter && right_rear_udder_quarter && left_rear_udder_quarter){
+  if(tempreture_animal && right_front_udder_quarter && left_front_udder_quarter && right_rear_udder_quarter && left_rear_udder_quarter){
   $("#btn-save-tempreture-test").html("saving data..");
     $("#btn-save-tempreture-test").attr("disabled", "true")
     var settings = {
@@ -416,6 +420,133 @@ $.ajax(settings).done(function (response) {
     alert("All fields are required")
   }
   }
+
+
+//////////////////////////
+function getMilkStatus(prediction){
+   if(prediction == 1){
+    return "danger";
+   }else if(prediction == 2){
+    return "success";
+   }else{
+    return "warning";
+   }
+  }
+  /////
+function MilkTest(){
+    var milk_animal = parseInt($("#milk-animal").val());
+    var conductivity_lf = parseFloat($("#conductivity_lf").val());
+    var conductivity_lr = parseFloat($("#conductivity_lr").val());
+    var conductivity_rf = parseFloat($("#conductivity_rf").val());
+    var conductivity_rr = parseFloat(parseInt($("#conductivity_rr").val()));
+    ////////
+    const csrftoken = document.querySelector('#milk-test-form [name=csrfmiddlewaretoken]').value;
+  // console.log(csrftoken);
+  if(milk_animal && conductivity_lf && conductivity_lr  && conductivity_rf && conductivity_rr){
+  $("#btn-detect-milk-test").html("Proccessing..");
+    $("#btn-detect-milk-test").attr("disabled", "true")
+    var settings = {
+  "url": "http://127.0.0.1:8000/api/detect/mastitis/milk/" + milk_animal + "/",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    'X-CSRFToken': csrftoken
+  },
+  'mode': 'same-origin',
+  "data": JSON.stringify({
+    "save":false,
+    "conductivity_lf": conductivity_lf, 
+    "conductivity_lr": conductivity_lr,
+    "conductivity_rf": conductivity_rf,
+    "conductivity_rr": conductivity_rr
+}),
+};
+$.ajax(settings).done(function (response) {
+  $("#btn-detect-milk-test").html("Detect");
+  $("#btn-detect-milk-test").removeAttr("disabled");
+  //  console.log(response);
+  var prediction = response.prediction;
+  //////////////////
+  if(prediction == 1){
+     $("#mastits-detection-status").addClass("btn-danger");
+      /////
+     $("#mastits-detection-status").removeClass("btn-warning");
+     $("#mastits-detection-status").removeClass("btn-success");
+     $("#mastits-detection-status").html("POSSIBLE CLINICAL MASTITIS");
+     if(isConnected){
+     websocket.send('CM:POSSIBLE CLINICAL MASTITIS');
+     }
+  }else if (prediction == 2){
+    $("#mastits-detection-status").addClass("btn-success");
+    $("#mastits-detection-status").removeClass("btn-warning");
+    $("#mastits-detection-status").removeClass("btn-danger");
+    $("#mastits-detection-status").html("NO MASTITIS DETECTED");
+    if(isConnected){
+    websocket.send('NM:NO MASTITIS DETECTED');
+    }
+  } else {
+    $("#mastits-detection-status").addClass("btn-warning");
+    ///
+    $("#mastits-detection-status").removeClass("btn-danger");
+    $("#mastits-detection-status").removeClass("btn-success");
+    $("#mastits-detection-status").html("POSSIBLE SUB-CLINICAL MASTITIS");
+    if(isConnected){
+    websocket.send('SCM:POSSIBLE SUB-CLINICAL MASTITIS');
+    }
+  }
+  var dataString = "<div>Results: <span class='text-" + getMilkStatus(response.results.prediction) + "'>" + response.results.results + "</span></div>";
+  $("#milk-test-results").html(dataString);
+});
+}else{
+    alert("All fields are required")
+}
+}
+
+
+  function SaveMilkTestResults(){
+    var milk_animal = parseInt($("#milk-animal").val());
+    var conductivity_lf = parseFloat($("#conductivity_lf").val());
+    var conductivity_lr = parseFloat($("#conductivity_lr").val());
+    var conductivity_rf = parseFloat($("#conductivity_rf").val());
+    var conductivity_rr = parseFloat(parseInt($("#conductivity_rr").val()));
+    ////////
+    const csrftoken = document.querySelector('#milk-test-form [name=csrfmiddlewaretoken]').value;
+  // console.log(csrftoken);
+  if(milk_animal && conductivity_lf && conductivity_lr  && conductivity_rf && conductivity_rr){
+  $("#btn-detect-milk-test").html("Proccessing..");
+    $("#btn-detect-milk-test").attr("disabled", "true")
+    var settings = {
+  "url": "http://127.0.0.1:8000/api/detect/mastitis/milk/" + milk_animal + "/",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    'X-CSRFToken': csrftoken
+  },
+  'mode': 'same-origin',
+  "data": JSON.stringify({
+    "save":true,
+    "conductivity_lf": conductivity_lf, 
+    "conductivity_lr": conductivity_lr,
+    "conductivity_rf": conductivity_rf,
+    "conductivity_rr": conductivity_rr
+}),
+};
+$.ajax(settings).done(function (response) {
+  $("#btn-detect-milk-test").html("Detect");
+  $("#btn-detect-milk-test").removeAttr("disabled");
+  ///////////
+ $("#conductivity_lf").val("");
+ $("#conductivity_lr").val("");
+ $("#conductivity_rf").val("");
+ $("#conductivity_rr").val("");
+  $("#milk-test-results").html("<span class='text-success'>Test and Predicted results saved succefully</span>");
+});
+}else{
+    alert("All fields are required")
+}
+}
+
+
 </script>
 </body>
 </html>

@@ -129,6 +129,57 @@ class API:
             "results": result
         }
 
-    def DetectMastitisMilk(self, request, animalid, data):
-        results = []
-        return data
+    def DetectMastitisMilk(self, request, animalid, data, milk_model, sc_X):
+        save = data["save"]
+        conductivity_lf = data["conductivity_lf"]
+        conductivity_lr = data["conductivity_lr"]
+        conductivity_rf = data["conductivity_rf"]
+        conductivity_rr = data["conductivity_rr"]
+        conductivity_test = (conductivity_lf, conductivity_lr, conductivity_rf, conductivity_rr)
+        ##############3
+        rt_conductivity = self.MilkPrediction(milk_model, self.MilkStandardization(conductivity_test, sc_X))
+
+        if save:
+            # save test
+            test = MilkTest.objects.create(
+                animal = Animal(pk=int(animalid)),
+                conductivity_lf = conductivity_lf,
+                conductivity_lr = conductivity_lr,
+                conductivity_rf = conductivity_rf,
+                conductivity_rr = conductivity_rr,
+            )
+            test.save()
+            # save results
+            MilkResult.objects.create(
+                test = MilkTest(pk=test.pk),
+                results = rt_conductivity["prediction"]
+            ).save()
+        return {
+            "results": rt_conductivity,
+            "prediction": rt_conductivity["prediction"]
+        }
+
+
+    def MilkStandardization(self, input_data, sc_X):
+        #converting the input data into a numpyarray 
+        input_conductivity = np.asarray(input_data)
+        #reshaping the numpy array
+        input_cond_reshaped = input_conductivity.reshape(1,-1)
+        input_cond_reshaped.shape
+        #standardizing the data 
+        return sc_X.transform(input_cond_reshaped)
+
+    def MilkPrediction(self, milk_model, input_temp_std):
+        prediction =  milk_model.predict(input_temp_std)
+        prediction_label = [np.argmax(prediction)]
+        result = ""
+        if(prediction_label[0]==1):
+            result = "clinical Mastitis Detected"
+        elif (prediction_label[0]==2):
+            result = "Healthy animal and no mastitis Detected"
+        else:
+            result = "subclinical mastitis Detected"
+        return {
+            "prediction": prediction_label[0],
+            "results": result
+        }

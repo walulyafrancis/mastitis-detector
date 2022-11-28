@@ -52,8 +52,22 @@ class MilkTest(models.Model):
     conductivity_lr = models.FloatField()
     conductivity_rf = models.FloatField()
     conductivity_rr = models.FloatField()
-    has_mastitis = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-       status = "NO MASTITIS" if self.has_mastitis else "HAS MASTITIS"
-       return "%s - (%s)" % (self.animal, status)
+       return "%s - %s - CLF: %s mS - CLR: %s mS - CRF: %s mS - CRR: %s mS" % (self.animal, str(self.created), str(self.conductivity_lf), str(self.conductivity_lr), str(self.conductivity_rf), str(self.conductivity_rr))
+
+
+class MilkResult(models.Model):
+    test = models.ForeignKey(MilkTest, on_delete=models.CASCADE)
+    results = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+       return "%s - Result: (%s)" % (str(self.test), self.MastistResults(self.results))
+    def MastistResults(self, prediction):
+        if(prediction==2):
+            return "Healthy animal and no mastitis Detected"
+        elif (prediction==1):
+            return"clinical Mastitis Detected"
+        else:
+            return "subclinical mastitis Detected"
+           
