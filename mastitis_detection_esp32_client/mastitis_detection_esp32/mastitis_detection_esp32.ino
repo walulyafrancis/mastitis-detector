@@ -207,15 +207,15 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     data[len] = 0;
       String text = (char*)data;
       Serial.println(text);
+      Serial.println(text.indexOf("NM:"));
     if(text != ""){
     ////////myString.indexOf("Arduino");
-    if(text.indexOf("CM:") > 0){
-     // contains mastitis
-        mastitisState = 1;
-    }else if(text.indexOf("SCM:") > 0){
-        mastitisState = 1;
+    if(text.indexOf("NM:") == 0){
+       // contains mastitis
+      mastitisState = 0;  
+      
     }else{
-      mastitisState = 0;      
+      mastitisState = 1;    
     }
     notifyClients(text);
     }

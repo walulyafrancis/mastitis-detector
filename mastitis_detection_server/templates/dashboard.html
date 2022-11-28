@@ -352,7 +352,7 @@ $.ajax(settings).done(function (response) {
     $("#mastits-detection-status").removeClass("btn-success");
     $("#mastits-detection-status").html("POSSIBLE SUB-CLINICAL MASTITIS");
     if(isConnected){
-    websocket.send('SCM:POSSIBLE SUB-CLINICAL MASTITIS');
+       websocket.send('SCM:POSSIBLE SUB-CLINICAL MASTITIS');
     }
   }else{
     $("#mastits-detection-status").addClass("btn-success");
